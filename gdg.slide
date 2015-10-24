@@ -1,0 +1,54 @@
+Go for the Web
+24 Oct 2015
+
+Stephan Dollberg
+stephan.dollberg@gmail.com
+
+* Microservice/REST APIs
+
+Patterns:
+
+- Query several backends (concurrently)
+- Wait for all/any replies
+- Cancel outstanding requests to backends on error or timeout
+
+* x/net/context
+
+_A_Context_carries_a_deadline,_a_cancelation_signal,_and_other_values_across_API_boundaries._
+
+    type Context interface {
+        Deadline() (deadline time.Time, ok bool)
+        Done() <-chan struct{}
+        Err() error
+        Value(key interface{}) interface{}
+    }
+
+    func WithCancel(parent Context) (ctx Context, cancel CancelFunc)
+    func WithDeadline(parent Context, deadline time.Time) (Context, CancelFunc)
+    func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)
+    func WithValue(parent Context, key interface{}, val interface{}) Context
+
+* x/net/context main package
+
+.code -numbers demo/contextdemo/context.go /^func handler/,/^}/
+
+* x/net/context city package
+
+.code demo/cityapi/city.go /START OMIT/,/END OMIT/
+
+* x/net/context weather package
+
+.code demo/weatherapi/weather.go /^func Query/,/^}/
+
+* x/net/context weather package
+
+.code demo/weatherapi/weather.go /^func getImpl/,/^}/
+
+* x/net/context weather package
+
+.code demo/weatherapi/weather.go /^func httpDo/,/^}/
+
+* Go in the Web
+
+- Language features enable concurrency
+- (Standard) library gives framework for cancelation and state

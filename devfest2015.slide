@@ -1,0 +1,256 @@
+The Go Programming Language
+an Introduction
+
+by Thomas Wilde
+me@thwd.me
+
+* Not so long ago, in 2007
+
+.image tpg.png
+
+.caption Griesemer, Pike and Thompson (left to right)
+
+* Dichotomy
+
+Fast to write _or_ fast to execute. Why not both?
+
+.image triangle.png 400 _
+
+* Observations
+
+- Manual memory management is a security risk
+- People want static type checking
+- Inheritance doesn't scale
+- Languages become products in the long run
+- CPUs are shipping with more and more cores
+
+* The Go Programming Language
+
+- Compiled
+- Statically typed
+- Garbage collected
+- No inheritance
+- Built-in concurrency
+- Simple, small, easy to learn
+- Speedy
+
+* Hello, world!
+
+Go code is organized in packages
+
+    package main
+
+    import (
+        "fmt"
+    )
+
+    func main() {
+        fmt.Println("Hello, world!")
+    }
+
+* Write a Package
+
+with one type and one method
+
+    package session
+
+    import(
+        "net/http"
+        "time"
+    )
+
+    type Session struct {
+        Id       int
+        Username string
+        Expires  time.Time
+    }
+
+    func InitSession(id *http.Request) Session {
+        //...
+    }
+
+and now, publish it to github
+
+* Import Libraries
+
+Get it:
+
+    $ go get github.com/thwd/session
+
+Use it:
+
+    package main
+
+    import (
+        "fmt"
+        "net/http"
+        "github.com/thwd/session"
+    )
+
+    func HandleHTTPRequest(rw http.ResponseWriter, rq *http.Request) {
+        sn := session.InitSession(rq)
+        fmt.Fprint(rw, sn.Username)
+    }
+
+* Saving a Session
+
+we want to be able to save session data
+
+    package session
+
+    import(
+        "db"
+        "net/http"
+        "time"
+    )
+
+    const tableName = "sessions"
+
+    type Session struct {
+        Id       int
+        Username string
+        Expires  time.Time
+    }
+
+    func (s Session) Save() {
+        db.Table(tableName).Update(s)
+    }
+
+* Changing the Username
+
+
+    package main
+
+    import (
+        "net/http"
+        "github.com/thwd/session"
+    )
+
+    func HandleHTTPRequest(rw http.ResponseWriter, rq *http.Request) {
+        sn := session.InitSession(rq)
+        un := rq.PostForm.Get("new_username")
+        if len(un) > 0 {
+            sn.Username = un
+        }
+        sn.Save()
+    }
+
+`len()` is a built-in function and returns the length of a string
+
+* Maps and slices
+
+Slices are like arrays but grow as needed
+
+    []int
+
+Slice example:
+
+    sc := make([]int, 2)
+    sc[0] = 4
+    sc[1] = 2
+
+Maps are hash-tables (associative arrays)
+
+    map[string]bool
+
+Map example:
+
+    mp := make(map[string]bool)
+    mp["yes"] = true
+    mp["no"] = false
+
+* We have explicit pointers
+
+Go is pass-by-value. We have pointers to pass references.
+
+Just like in C, except:
+
+- No pointer arithmetic
+- No casting between pointer types
+- `nil` is well-defined
+- No `->` operator, only `.` (dot)
+
+    s := [1024]byte{}
+    p := &s
+    doSomething(p) // mutate s
+
+
+All this results in memory-safe pointers.
+
+* We have package "unsafe"
+
+To do stupid things with pointers.
+
+* Polymorphism
+
+We use interfaces
+
+    type DatabaseAdapter interface {
+        Connect(Config) error
+        Execute(Query) Result
+        Close()
+    }
+
+`error` is a built-in interface:
+
+    type error interface {
+        Error() string
+    }
+
+Anything that has method called `Error()` returning a string can be used as an `error`.
+
+* Interface implementation is implicit
+
+    type ConnectionError struct{}
+
+    func(e ConnectionError) Error() string {
+        return "there was an error establishing a database connection"
+    }
+
+A `DatabaseAdapter` implementation
+
+    type ExampleAdapter map[Query]Result
+
+    func(a ExampleAdapter) Connect(c Config) error {
+        if a == nil {
+            return ConnectionError{}
+        }
+        return nil
+    }
+
+    func (a ExampleAdapter) Execute(q Query) Result {
+        return a[q]
+    }
+
+    func (a ExampleAdapter) Close() {}
+
+
+* Functions are first-class citizens
+
+We have lambdas
+
+    fn := func(msg string) {
+        fmt.Println(msg)
+    }
+
+    fn("fn is a lambda!")
+
+And yes, lexical scoping as well
+
+    a, b := 1, 2
+
+    fn := func() {
+        fmt.Println(a + b)
+    }
+
+    fn() // fn is a closure
+
+* Concurrency is built-in
+
+I'd love to show you. But this talk is too short.
+
+* Welcome to the gopher club!
+
+Join us on meetup.com/zurich-gophers !
+
+.image gopher.png 300 _
